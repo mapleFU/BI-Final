@@ -48,13 +48,13 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 
 def merge_result(result: py2neo.Cursor):
     nodes, relations = list(), list()
-    for r in result:
-        for n, r in permlize_result(r):
-            if n is None:
-                relations.append(r)
-            else:
-                nodes.append(n)
-    return nodes, relations
+    for record in result:
+        for n, r in permlize_result(record):
+            relations.append(r) if n is None else nodes.append(n)
+    return {
+        'nodes': nodes,
+        'relationships': relations
+    }
 
 
 @app.route('/person/<pid>/organization')
