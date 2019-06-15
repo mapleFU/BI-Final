@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask.views import View
 from neo4j import GraphDatabase
+from py2neo.data import Node, Relationship
 from py2neo import Graph, NodeMatcher, Database
 import py2neo
 
@@ -20,36 +21,40 @@ g = Graph(driver_address)
 app = Flask(__name__)
 
 
-def permlize_single_result(record_dict: dict):
-    for _, v in record_dict.items():
-        # print(type(v.labels))
-        value_dict = dict(v)
-        value_dict["id"] = value_dict['permID']
-        yield value_dict
+def permlize_node_result(record_node: Node):
+    value_dict = dict(record_node)
+    value_dict["id"] = value_dict['permID']
+    return value_dict
+
+
+def permlize_relationship_result(record_node: Relationship):
+    value_dict = dict(record_node)
+    value_dict["from"] = dict(record_node.start_node)['permID']
+    value_dict["to"] = dict(record_node.start_node)['permID']
+    return value_dict
 
 
 def permlize_result(record: py2neo.Record):
-    drecord = dict(record)
-    if len(drecord) <= 1:
-        yield permlize_single_result(drecord)
-    if len(drecord) == 3:
-        dic2 = dict()
-        for k in ('s', 'o'):
-            value_dict = record[k]
-            value_dict["id"] = value_dict['permID']
-            dic2[k] = value_dict["id"]
-            yield value_dict
-        value_dict = record['p']
-        value_dict["from"] = dic2['s']
-        value_dict["to"] = dic2['o']
-        yield value_dict
+    # print(dict(record))
+    for v in dict(record).values():
+        if isinstance(v, Node):
+            yield (permlize_node_result(v), None)
+        elif isinstance(v, Relationship):
+            yield (None, permlize_relationship_result(v))
 
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 
 def merge_result(result: py2neo.Cursor):
-    return flatten([permlize_result(r) for r in result])
+    nodes, relations = list(), list()
+    for r in result:
+        for n, r in permlize_result(r):
+            if n is None:
+                relations.append(r)
+            else:
+                nodes.append(n)
+    return nodes, relations
 
 
 @app.route('/person/<pid>/organization')
