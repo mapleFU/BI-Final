@@ -128,7 +128,7 @@ def organization(oid):
     return jsonify(merge_result(g.run(cql)))
 
 #6.查看某个institution相关的person
-#不在要求内，非功能性需求
+#不在要求内
 @app.route('/institution/<iname>')
 def organization(iid):
     cql=f'''MATCH (s:Institution{{name:'{iname}'}})-[p]-(o) return  s, p, o'''
@@ -136,7 +136,7 @@ def organization(iid):
     return jsonify(merge_result(g.run(cql)))
 
 #7.查看某个industryGroup相关的organization
-#不在要求内，非功能性需求
+#不在要求内
 @app.route('/idustryGroup/<ilabel>')
 def organization(ilabel):
     cql=f'''MATCH (s:IndustryGroup{{name:'{ilabel}'}})-[p]-(o) return  s, p, o'''
