@@ -41,7 +41,10 @@ def permlize_node_result(record_node: Node):
     value_dict = dict(record_node)
     value_dict["id"] = value_dict['permID']
     labels = list(record_node.labels)
-    value_dict["type"] = labels[0]
+    if(labels[0]=='NewResource'):
+        value_dict["type"] = labels[1]
+    else:
+        value_dict["type"] = labels[0]
     tag_label(value_dict)
     return value_dict
 
