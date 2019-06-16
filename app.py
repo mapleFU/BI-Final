@@ -96,6 +96,10 @@ def merge_result(result: py2neo.Cursor):
 /organization/4296405163
 /person/34418264994
 /person/34418264994/organization/4296405163
+/organization/5043331619/organization/4296405163
+/person/34418264994/person/34413884412
+/institution/Duke University
+/industryGroup/4294952987
 """
 
 
@@ -163,7 +167,7 @@ def organization_show_all(oid):
 
 
 @app.route('/institution/<iname>')
-def organization(iid):
+def institution(iid):
     """
     #6.查看某个institution相关的person
     #不在要求内
@@ -173,13 +177,13 @@ def organization(iid):
     return jsonify(merge_result(g.run(cql)))
 
 
-@app.route('/industryGroup/<ilabel>')
-def industry_group_to_organization(ilabel):
+@app.route('/industryGroup/<iid>')
+def industry_group_to_organization(iid):
     """
     #7.查看某个industryGroup相关的organization
     #不在要求内
     """
-    cql=f'''MATCH (s:IndustryGroup{{name:'{ilabel}'}})-[p]-(o) return  s, p, o'''
+    cql=f'''MATCH (s:IndustryGroup{{permID:'{iid}'}})-[p]-(o:Organization) return  s, p, o'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
