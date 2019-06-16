@@ -8,6 +8,7 @@ flask = "*"
 "py2neo" = "*"
 "neo4j" = "*"
 flask-cors = "*"
+elasticsearch = "*"
 
 [dev-packages]
 
