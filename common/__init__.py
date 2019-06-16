@@ -12,7 +12,7 @@ def load_graph_gen():
         nonlocal graph
         exist = os.environ.get('is_local', None)
         if exist is None:
-            driver_address = 'bolt://0.tcp.ngrok.io:19185'
+            driver_address = 'bolt://0.tcp.ngrok.io:14330'
         else:
             driver_address = "bolt://localhost:7687"
         graph = Graph(driver_address)
