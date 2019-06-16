@@ -197,7 +197,7 @@ def industry_group_to_organization(iid):
     #7.查看某个industryGroup相关的organization
     #不在要求内
     """
-    cql=f'''MATCH (s:IndustryGroup{{permID:'{iid}'}})-[p]-(o:Organization) return  s, p, o'''
+    cql=f'''MATCH (s:IndustryGroup{{permID:'{iid}'}})-[p]-(o:Organization) return  s, p, o limit 20'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
