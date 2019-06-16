@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
+import random
 
 from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
@@ -189,7 +190,7 @@ def institution(iid):
     #6.查看某个institution相关的person
     #不在要求内
     """
-    cql=f'''MATCH (s:Institution{{name:'{iname}'}})-[p]-(o) return  s, p, o'''
+    cql=f'''MATCH (s:Institution{{name:'{iname}'}})-[p]-(o) return  s, p, o limit20'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
@@ -201,6 +202,45 @@ def industry_group_to_organization(iid):
     #不在要求内
     """
     cql=f'''MATCH (s:IndustryGroup{{permID:'{iid}'}})-[p]-(o:Organization) return  s, p, o limit 20'''
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/initGraph')
+def initGraph():
+    """
+    #8.初始化图
+    """
+    randomoffset=int(round(random.random()*10000,0))
+    cql=f'''START t=node(*) 
+    MATCH (s:Person)-[p]-(o:Organization) 
+    RETURN s,p,o
+    SKIP {{{randomoffset}}} LIMIT 20 '''
+
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/economicSector/<eid>')
+def economicSector(eid):
+    """
+    #10.
+    """
+
+    cql = f'''MATCH (s:EconomicSector{{permID:'{eid}'}})-[p]-(o:Organization) return  s, p, o limit 20'''
+
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/businessSector/<eid>')
+def businessSector(eid):
+    """
+    #11.
+    """
+
+    cql = f'''MATCH (s:BusinessSector{{permID:'{eid}'}})-[p]-(o:Organization) return  s, p, o limit 20'''
+
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
