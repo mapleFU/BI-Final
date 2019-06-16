@@ -1,4 +1,5 @@
 from common import load_elastic_search
+
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
@@ -7,6 +8,7 @@ from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
 from py2neo import Graph, NodeMatcher, Database
 import py2neo
+from elasticsearch import Elasticsearch
 
 import os
 from typing import List, Dict
@@ -42,7 +44,7 @@ def query_organization_name(es_client: Elasticsearch, name: str):
     print("Got %d Hits:" % res['hits']['total']['value'])
     nodes = []
     for hit in res['hits']['hits']:
-        nodes.append(hit['_source']['doc']))
+        nodes.append(hit['_source']['doc'])
     return nodes
 
 
@@ -145,7 +147,7 @@ def person_organization(pid, oid):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Person {{permID: '{pid}' }})-[p:isPositionIN]-(o:Organization{{permID: '{oid}' }})
+        MATCH (s:Person :NewResource {{permID: '{pid}' }})-[p:isPositionIN]-(o:Organization :NewResource {{permID: '{oid}' }})
         return s, p, o
     '''
     print(cql)
@@ -159,7 +161,7 @@ def person_person(pid1,pid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Person {{permID: '{pid1}' }})-[p]-(o:Person{{permID: '{pid2}' }})
+        MATCH (s:Person :NewResource {{permID: '{pid1}' }})-[p]-(o:Person :NewResource{{permID: '{pid2}' }})
         return s, p, o
     '''
     print(cql)
@@ -173,7 +175,7 @@ def organization_organization(oid1, oid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Organization {{permID: '{oid1}' }})-[p]-(o:Organization{{permID: '{oid2}' }})
+        MATCH (s:Organization :NewResource {{permID: '{oid1}' }})-[p]-(o:Organization :NewResource {{permID: '{oid2}' }})
         return s, p, o
     '''
     print(cql)
@@ -185,7 +187,7 @@ def person(pid):
     """
     2。输⼊入⼀一个实体（如Alibaba），查询其关联的所有关系和关联实体；
     """
-    cql=f'''MATCH (s:Person{{permID:'{pid}'}})-[p]-(o) return s, p, o '''
+    cql=f'''MATCH (s:Person :NewResource {{permID:'{pid}'}})-[p]-(o) return s, p, o '''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
@@ -196,7 +198,7 @@ def organization_show_all(oid):
     #5.
     2。输⼊入⼀一个实体（如Alibaba），查询其关联的所有关系和关联实体；
     """
-    cql=f'''MATCH (s:Organization{{permID:'{oid}'}})-[p]-(o) return  s, p, o'''
+    cql=f'''MATCH (s :Organization :NewResource{{permID:'{oid}'}})-[p]-(o) return  s, p, o'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
@@ -207,7 +209,7 @@ def institution(iid):
     #6.查看某个institution相关的person
     #不在要求内
     """
-    cql=f'''MATCH (s:Institution{{name:'{iname}'}})-[p]-(o) return  s, p, o'''
+    cql=f'''MATCH (s :Institution :NewResource {{name:'{iname}'}})-[p]-(o) return  s, p, o'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
@@ -218,7 +220,8 @@ def industry_group_to_organization(iid):
     #7.查看某个industryGroup相关的organization
     #不在要求内
     """
-    cql=f'''MATCH (s:IndustryGroup{{permID:'{iid}'}})-[p]-(o:Organization) return  s, p, o limit 20'''
+    cql=f'''MATCH (s :IndustryGroup :NewResource {{permID:'{iid}'}})-[p]-
+    (o :Organization :NewResource) return  s, p, o limit 20'''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 

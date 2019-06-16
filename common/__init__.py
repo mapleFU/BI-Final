@@ -31,7 +31,12 @@ load_graph = load_graph_gen()
 
 
 def load_elastic_search():
-    es = Elasticsearch(['localhost'], http_compress=True)
+    exist = os.environ.get('is_local', None)
+    if exist is None:
+        es_address = 'localhost'
+    else:
+        es_address = "maplewish.cn"
+    es = Elasticsearch([es_address], http_compress=True)
     return es
 
 
