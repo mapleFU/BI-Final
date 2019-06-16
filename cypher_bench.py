@@ -1,4 +1,3 @@
-from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
 from py2neo import Graph, NodeMatcher, Database
 

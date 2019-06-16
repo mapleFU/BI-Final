@@ -1,3 +1,4 @@
+from common import load_elastic_search
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
@@ -26,6 +27,23 @@ CORS(app)
 
 
 LABEL_ATTR_SET =set(["institution", "title", "organizationName", "givenName", "label"])
+
+
+def query_organization_name(es_client: Elasticsearch, name: str):
+    es_query = {
+        "query": {
+            "match": {
+                "doc.organizationName": name
+            }
+
+        }
+    }
+    res = es_client.search(index="organizations", body=es_query)
+    print("Got %d Hits:" % res['hits']['total']['value'])
+    nodes = []
+    for hit in res['hits']['hits']:
+        nodes.append(hit['_source']['doc']))
+    return nodes
 
 
 def tag_label(value_dict: dict):
