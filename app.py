@@ -101,12 +101,13 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 def merge_result(result: py2neo.Cursor):
     nodes, relations = list(), list()
     for record in result:
-        # print(record)
+        print(record)
         for n, r in permlize_result(record):
             relations.append(r) if n is None else nodes.append(n)
     return {
         'nodes': remove_duplicate_nodes(nodes),
         'relationships': remove_duplicate_relationships(relations)
+
     }
 
 
@@ -114,12 +115,13 @@ def merge_result(result: py2neo.Cursor):
 /organization/4296405163
 /person/34418264994
 /person/34418264994/organization/4296405163
-/organization/5043331619/organization/4296405163
+/organization/5000716861/organization/4296405163
 /person/34418264994/person/34413884412
 /institution/Duke University
 /industryGroup/4294952987
 /businessSector/4294952745
 /economicSector/4294952746
+/initGraph
 """
 
 
@@ -144,8 +146,8 @@ def person_person(pid1,pid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Person {{permID: '{pid1}' }})-[p]-(o:Person{{permID: '{pid2}' }})
-        return s, p, o
+        MATCH (s:Person {{permID: '{pid1}' }})-[r1]-(p)-[r2]-(o:Person{{permID: '{pid2}' }})
+        return s, r1,p,r2, o
     '''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
@@ -158,8 +160,8 @@ def organization_organization(oid1, oid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Organization {{permID: '{oid1}' }})-[p]-(o:Organization{{permID: '{oid2}' }})
-        return s, p, o
+        MATCH (s:Organization {{permID: '{oid1}' }})-[r1]-(p)-[r2]-(o:Organization{{permID: '{oid2}' }})
+        return s, r1,p,r2, o
     '''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
