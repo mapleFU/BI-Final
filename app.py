@@ -3,6 +3,7 @@ from common import load_elastic_search
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
+import random
 
 from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
@@ -60,7 +61,10 @@ def permlize_node_result(record_node: Node):
     value_dict = dict(record_node)
     value_dict["id"] = value_dict['permID']
     labels = list(record_node.labels)
-    value_dict["type"] = labels[0]
+    if(labels[0]=='NewResource'):
+        value_dict["type"] = labels[1]
+    else:
+        value_dict["type"] = labels[0]
     tag_label(value_dict)
     return value_dict
 
@@ -120,12 +124,13 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 def merge_result(result: py2neo.Cursor):
     nodes, relations = list(), list()
     for record in result:
-        # print(record)
+        print(record)
         for n, r in permlize_result(record):
             relations.append(r) if n is None else nodes.append(n)
     return {
         'nodes': remove_duplicate_nodes(nodes),
         'relationships': remove_duplicate_relationships(relations)
+
     }
 
 
@@ -133,10 +138,13 @@ def merge_result(result: py2neo.Cursor):
 /organization/4296405163
 /person/34418264994
 /person/34418264994/organization/4296405163
-/organization/5043331619/organization/4296405163
+/organization/5000716861/organization/4296405163
 /person/34418264994/person/34413884412
 /institution/Duke University
 /industryGroup/4294952987
+/businessSector/4294952745
+/economicSector/4294952746
+/initGraph
 """
 
 
@@ -161,8 +169,8 @@ def person_person(pid1,pid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Person :NewResource {{permID: '{pid1}' }})-[p]-(o:Person :NewResource{{permID: '{pid2}' }})
-        return s, p, o
+        MATCH (s:Person :NewResource {{permID: '{pid1}' }})-[r1]-(p)-[r2]-(o:Person :NewResource {{permID: '{pid2}' }})
+        return s, r1,p,r2, o
     '''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
@@ -175,8 +183,8 @@ def organization_organization(oid1, oid2):
     为，通过多条边链式的连接在⼀一起。如Alibaba -> (Industry) Internet -> Tencent
     """
     cql = f'''
-        MATCH (s:Organization :NewResource {{permID: '{oid1}' }})-[p]-(o:Organization :NewResource {{permID: '{oid2}' }})
-        return s, p, o
+        MATCH (s:Organization :NewResource {{permID: '{oid1}' }})-[r1]-(p)-[r2]-(o:Organization :NewResource {{permID: '{oid2}' }})
+        return s, r1,p,r2, o
     '''
     print(cql)
     return jsonify(merge_result(g.run(cql)))
@@ -204,12 +212,13 @@ def organization_show_all(oid):
 
 
 @app.route('/institution/<iname>')
-def institution(iid):
+def institution(iname):
     """
     #6.查看某个institution相关的person
     #不在要求内
     """
     cql=f'''MATCH (s :Institution :NewResource {{name:'{iname}'}})-[p]-(o) return  s, p, o'''
+
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
@@ -222,6 +231,45 @@ def industry_group_to_organization(iid):
     """
     cql=f'''MATCH (s :IndustryGroup :NewResource {{permID:'{iid}'}})-[p]-
     (o :Organization :NewResource) return  s, p, o limit 20'''
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/initGraph')
+def initGraph():
+    """
+    #8.初始化图
+    """
+    randomoffset=int(round(random.random()*10000,0))
+    cql='''
+    MATCH (s:Person)-[p]-(o:Organization) 
+    RETURN s,p,o
+    SKIP {} LIMIT 50 '''.format(randomoffset)
+
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/economicSector/<eid>')
+def economicSector(eid):
+    """
+    #10.
+    """
+
+    cql = f'''MATCH (s:EconomicSector{{permID:'{eid}'}})-[p]-(o:Organization) return  s, p, o limit 200'''
+
+    print(cql)
+    return jsonify(merge_result(g.run(cql)))
+
+
+@app.route('/businessSector/<eid>')
+def businessSector(eid):
+    """
+    #11.
+    """
+
+    cql = f'''MATCH (s:BusinessSector{{permID:'{eid}'}})-[p]-(o:Organization) return  s, p, o limit 200'''
+
     print(cql)
     return jsonify(merge_result(g.run(cql)))
 
