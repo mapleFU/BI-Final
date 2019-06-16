@@ -3,7 +3,7 @@ from common import load_elastic_search, load_graph
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
-from flask.ext.cache import Cache
+from flask_caching import Cache
 
 from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
@@ -18,7 +18,11 @@ from typing import List, Dict
 g = load_graph()
 app = Flask(__name__)
 CORS(app)
-cache = Cache(app, config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
 
 
 LABEL_ATTR_SET = {"institution", "title", "organizationName", "givenName", "label"}
@@ -142,11 +146,16 @@ def merge_result(result: py2neo.Cursor):
 """
 
 
-@app.route("/search/<organization_name:str>")
-def search_organization(organization_name):
+@cache.memoize(60)
+def query_organization_name(organization_name):
     return {
         "nodes": query_organization_name(organization_name)
     }
+
+
+@app.route("/search/<org_name>")
+def search_organization(org_name: str):
+    return query_organization_name(org_name)
 
 
 @app.route('/person/<pid>/organization/<oid>')
