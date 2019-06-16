@@ -36,6 +36,8 @@ def tag_label(value_dict: dict):
 def permlize_node_result(record_node: Node):
     value_dict = dict(record_node)
     value_dict["id"] = value_dict['permID']
+    labels = list(record_node.labels)
+    value_dict["type"] = labels[0]
     tag_label(value_dict)
     return value_dict
 
@@ -77,6 +79,18 @@ def remove_duplicate_relationships(r: List[Dict])->List[Dict]:
     return new_node
 
 
+def remove_duplicate_nodes(r: List[Dict])->List[Dict]:
+    r.sort(key=lambda x: (x['type'], x['permID']))
+    new_node = list()
+    last_node = None
+    equals = lambda a, b: a is not None and a['permID'] == b['permID']
+    for item in r:
+        if not equals(last_node, item):
+            new_node.append(item)
+            last_node = item
+    return new_node
+
+
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 
@@ -87,7 +101,7 @@ def merge_result(result: py2neo.Cursor):
         for n, r in permlize_result(record):
             relations.append(r) if n is None else nodes.append(n)
     return {
-        'nodes': nodes,
+        'nodes': remove_duplicate_nodes(nodes),
         'relationships': remove_duplicate_relationships(relations)
     }
 
