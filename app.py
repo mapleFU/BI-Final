@@ -45,6 +45,8 @@ def query_organization_name(es_client: Elasticsearch, name: str):
     print("Got %d Hits:" % res['hits']['total']['value'])
     nodes = []
     for hit in res['hits']['hits']:
+        cur_doc = hit['_source']['doc']
+        cur_doc['type'] = 'Organization'
         nodes.append(hit['_source']['doc'])
     return nodes
 
@@ -146,6 +148,13 @@ def merge_result(result: py2neo.Cursor):
 /economicSector/4294952746
 /initGraph
 """
+
+
+@app.route("/search/<organization_name:str>")
+def search_organization(organization_name):
+    return {
+        "nodes": query_organization_name(organization_name)
+    }
 
 
 @app.route('/person/<pid>/organization/<oid>')
