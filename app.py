@@ -1,5 +1,7 @@
 from flask import Flask, jsonify
 from flask.views import View
+from flask_cors import CORS
+
 from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
 from py2neo import Graph, NodeMatcher, Database
@@ -20,6 +22,7 @@ g = Graph(driver_address)
 
 
 app = Flask(__name__)
+CORS(app)
 
 
 LABEL_ATTR_SET =set(["institution", "title", "organizationName", "givenName", "label"])
