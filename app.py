@@ -28,7 +28,9 @@ cache = Cache(app, config={
 LABEL_ATTR_SET = {"institution", "title", "organizationName", "givenName", "label"}
 
 
-def query_organization_name(es_client: Elasticsearch, name: str):
+def query_organization_name(name: str, es_client: Elasticsearch=None):
+    if es_client is None:
+        es_client = load_elastic_search()
     es_query = {
         "query": {
             "match": {
@@ -147,15 +149,15 @@ def merge_result(result: py2neo.Cursor):
 
 
 @cache.memoize(60)
-def query_organization_name(organization_name):
-    return {
+def query_organization_by_name(organization_name):
+    return jsonify({
         "nodes": query_organization_name(organization_name)
-    }
+    })
 
 
 @app.route("/search/<org_name>")
 def search_organization(org_name: str):
-    return query_organization_name(org_name)
+    return query_organization_by_name(org_name)
 
 
 @app.route('/person/<pid>/organization/<oid>')
@@ -287,4 +289,4 @@ def businessSector(eid):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
