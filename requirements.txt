@@ -1,7 +1,10 @@
 certifi==2019.3.9
 Click==7.0
 colorama==0.4.1
+elasticsearch==7.0.2
 Flask==1.0.3
+Flask-Caching==1.7.2
+Flask-Cors==3.0.8
 itsdangerous==1.1.0
 Jinja2==2.10.1
 MarkupSafe==1.1.1
