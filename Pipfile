@@ -9,6 +9,7 @@ flask = "*"
 "neo4j" = "*"
 flask-cors = "*"
 elasticsearch = "*"
+flask-caching = "*"
 
 [dev-packages]
 

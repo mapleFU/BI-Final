@@ -1,9 +1,9 @@
-from common import load_elastic_search
+from common import load_elastic_search, load_graph
 
 from flask import Flask, jsonify
 from flask.views import View
 from flask_cors import CORS
-import random
+from flask_caching import Cache
 
 from neo4j import GraphDatabase
 from py2neo.data import Node, Relationship
@@ -12,24 +12,20 @@ import py2neo
 from elasticsearch import Elasticsearch
 
 import os
+import random
 from typing import List, Dict
 
-driver_address = ''
-
-exist = os.environ.get('is_local', None)
-if exist is None:
-    driver_address = 'bolt://0.tcp.ngrok.io:19185'
-else:
-    driver_address = "bolt://localhost:7687"
-
-g = Graph(driver_address)
-
-
+g = load_graph()
 app = Flask(__name__)
 CORS(app)
+cache = Cache(app, config={
+    "DEBUG": True,          # some Flask specific configs
+    "CACHE_TYPE": "simple", # Flask-Caching related configs
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
 
 
-LABEL_ATTR_SET =set(["institution", "title", "organizationName", "givenName", "label"])
+LABEL_ATTR_SET = {"institution", "title", "organizationName", "givenName", "label"}
 
 
 def query_organization_name(es_client: Elasticsearch, name: str):
@@ -150,11 +146,16 @@ def merge_result(result: py2neo.Cursor):
 """
 
 
-@app.route("/search/<organization_name:str>")
-def search_organization(organization_name):
+@cache.memoize(60)
+def query_organization_name(organization_name):
     return {
         "nodes": query_organization_name(organization_name)
     }
+
+
+@app.route("/search/<org_name>")
+def search_organization(org_name: str):
+    return query_organization_name(org_name)
 
 
 @app.route('/person/<pid>/organization/<oid>')
@@ -225,8 +226,10 @@ def institution(iname):
     """
     #6.查看某个institution相关的person
     #不在要求内
+
+    感觉很危险
     """
-    cql=f'''MATCH (s :Institution :NewResource {{name:'{iname}'}})-[p]-(o) return  s, p, o'''
+    cql=f'''MATCH (s :Institution {{name:'{iname}'}})-[p:fromInstitutionName]-(o:Person) return  s, p, o'''
 
     print(cql)
     return jsonify(merge_result(g.run(cql)))
